@@ -99,40 +99,41 @@ def get_gpt_batch(data: list[str], block_size: int, batch_size: int, DEVICE):
 
 @torch.no_grad()
 def estimate_loss(
+    DEVICE, 
     data: list[str],
     model: torch.nn.Module,
     block_size: int,
     batch_size: int,
-    eval_iters: int = 10,
+    eval_iters: int = 10,    
 ):
     out = {}
     model.eval()
     losses = torch.zeros(eval_iters)
     for k in range(eval_iters):
-        X, Y = get_gpt_batch(data=data, block_size=block_size, batch_size=batch_size)
+        X, Y = get_gpt_batch(data=data, block_size=block_size, batch_size=batch_size, DEVICE=DEVICE)
         logits, loss = model.forward(X, Y)
         losses[k] = loss.item()
     out = losses.mean()
     model.train()
     return out
 
-def gpt_training(model, train_data, val_data, LEARNING_RATE, BLOCK_SIZE, BATCH_SIZE, DEVICE, MAX_ITER = 10, print_each=1):
+def gpt_training(model, train_data, val_data, LEARNING_RATE, BLOCK_SIZE, BATCH_SIZE, DEVICE, iterations=10, print_each=1):
 
     # optimizer takes the model's parameters and the learning rate as input,
     # and updates the parameters during the training process in order to
     # minimize the loss function.
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
-    for step in range(MAX_ITER):
+    for step in range(iterations):
 
         # every print_each evaluate the loss on train and val sets
-        if step % print_each == 0 or step == MAX_ITER - 1:
+        if step % print_each == 0 or step == iterations - 1:
             loss_train = estimate_loss(
-                data=train_data, model=model, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
+                DEVICE=DEVICE, data=train_data, model=model, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
             )
             loss_val = estimate_loss(
-                data=val_data, model=model, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
+                DEVICE=DEVICE, data=val_data, model=model, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
             )
-            print("Step {:10} | Train Loss {:6.4f} | Validation Loss {:6.4f}".format(step, loss_train, loss_val))
+            print("Iteration: {:10} | Train Loss {:6.4f} | Validation Loss {:6.4f}".format(step+1, loss_train, loss_val))
 
         # sample a batch of data
         xb, yb = get_gpt_batch(data=train_data, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE, DEVICE=DEVICE)
@@ -145,7 +146,6 @@ def gpt_training(model, train_data, val_data, LEARNING_RATE, BLOCK_SIZE, BATCH_S
         # step() method on the optimizer updates the model's parameters 
         # using the calculated gradients, in order to minimize the loss.
         optimizer.step()
-
 
 ################################################################################################################################################
 ################################################################################################################################################

@@ -199,7 +199,7 @@ class TransformerBlock(nn.Module):
         head_size = num_embed // num_heads
         self.sa = MultiHeadAttention(
             "GPT",
-            num_heads=num_heads,
+            n_heads=num_heads,
             head_size=head_size,
             num_embed=num_embed,
             block_size=block_size,
@@ -293,7 +293,8 @@ class Transformer(nn.Module):
             # the token_emb is (B, T, C), C = NUM_EMBED
             token_emb = self.token_embedding_table(x)
             # (T, C)
-            posit_emb = self.position_embedding_table(torch.arange(T, device=DEVICE))
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            posit_emb = self.position_embedding_table(torch.arange(T, device=device))
 
             x = token_emb + posit_emb
             # apply one head of self-attention
