@@ -21,8 +21,8 @@ def bert_config():
             "n_code": n_code,
             "n_vocab": n_vocab,
             "dropout": dropout,
-            "training_path": "data/bert/training.txt",
-            "vocab_path": "data/bert/vocab.txt"
+            "training_path": "/content/bert_gpt_vit_transformers/library/data/bert/training.txt",
+            "vocab_path": "/content/bert_gpt_vit_transformers/library/data/bert/vocab.txt"
 
             }
     return config
@@ -38,7 +38,7 @@ def gpt_config():
                 "EVAL_INTER": 500,
                 "LEARNING_RATE": 3e-4,
                 "DEVICE": device,
-                "dataset_path": "data/gpt/english.txt",
+                "dataset_path": "/content/bert_gpt_vit_transformers/library/data/gpt/english.txt",
                 "NUM_HEAD": num_head,
                 "NUM_EMBED": num_embed,
                 "NUM_LAYER": 6,
@@ -49,7 +49,7 @@ def gpt_config():
 
 def vit_config():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    image_path = "data/vit"
+    image_path = "/content/bert_gpt_vit_transformers/library/data/vit"
     train_dir = image_path + "/train"
     test_dir = image_path + "/test"
     config = {"device": device,

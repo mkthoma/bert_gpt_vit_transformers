@@ -12,6 +12,7 @@ import math
 ######################################################################################################################################################
 ######################################################################################################################################################
 
+# BERT
 def attention(q, k, v, mask = None, dropout = None):
     scores = q.matmul(k.transpose(-2, -1))
     scores /= math.sqrt(q.shape[-1])    
@@ -22,6 +23,7 @@ def attention(q, k, v, mask = None, dropout = None):
     output = scores.matmul(v)
     return output
 
+# GPT
 class AttentionHead(nn.Module):
     """
     One head of the self-attention layer
@@ -58,7 +60,7 @@ class AttentionHead(nn.Module):
         return out
 
 
-
+# BERT AND GPT
 class MultiHeadAttention(nn.Module):
     def __init__(self, model, n_heads=None, out_dim=None, dropout=0.1, head_size=None, num_embed=None, block_size=None):
         super().__init__()
@@ -115,7 +117,7 @@ class MultiHeadAttention(nn.Module):
             out = self.dropout(self.proj(out))
             return out
 
-
+# BERT AND GPT
 class FeedForward(nn.Module):
     def __init__(self, model, inp_dim=None, inner_dim=None, dropout=0.1, num_embed=None):
         super().__init__()
@@ -143,6 +145,7 @@ class FeedForward(nn.Module):
         elif self.model == "GPT":
             return self.net(x)
 
+# BERT
 # Positional Embedding
 class PositionalEmbedding(nn.Module):
     def __init__(self, model, d_model, max_seq_len = 80):
@@ -163,13 +166,14 @@ class PositionalEmbedding(nn.Module):
         if self.model == "BERT":        
             return self.pe[:,:x.size(1)] #x.size(1) = seq_len
 
+# BERT
 class EncoderLayer(nn.Module):
     def __init__(self, model, n_heads, inner_transformer_size, inner_ff_size, dropout=0.1):
         super().__init__()
         self.model = model
         if self.model == "BERT":
-            self.mha = MultiHeadAttention(n_heads, inner_transformer_size, dropout)
-            self.ff = FeedForward(inner_transformer_size, inner_ff_size, dropout)
+            self.mha = MultiHeadAttention("BERT", n_heads, inner_transformer_size, dropout)
+            self.ff = FeedForward("BERT", inner_transformer_size, inner_ff_size, dropout)
             self.norm1 = nn.LayerNorm(inner_transformer_size)
             self.norm2 = nn.LayerNorm(inner_transformer_size)
             self.dropout1 = nn.Dropout(dropout)
@@ -183,6 +187,7 @@ class EncoderLayer(nn.Module):
             x = x + self.dropout2(self.ff(x2))
             return x
 
+# GPT
 class TransformerBlock(nn.Module):
     """
     This calss will group together MultiHead Attention and
@@ -193,13 +198,14 @@ class TransformerBlock(nn.Module):
         super().__init__()
         head_size = num_embed // num_heads
         self.sa = MultiHeadAttention(
+            "GPT",
             num_heads=num_heads,
             head_size=head_size,
             num_embed=num_embed,
             block_size=block_size,
             dropout=dropout,
         )
-        self.ffwd = FeedForward(num_embed=num_embed, dropout=dropout)
+        self.ffwd = FeedForward("GPT", num_embed=num_embed, dropout=dropout)
         # add the layer normalization
         self.ln1 = nn.LayerNorm(num_embed)
         self.ln2 = nn.LayerNorm(num_embed)
@@ -230,12 +236,12 @@ class Transformer(nn.Module):
 
             #model input
             self.embeddings = nn.Embedding(n_embeddings, embed_size)
-            self.pe = PositionalEmbedding(embed_size, seq_len)
+            self.pe = PositionalEmbedding("BERT", embed_size, seq_len)
             
             #backbone
             encoders = []
             for i in range(n_code):
-                encoders += [EncoderLayer(n_heads, embed_size, inner_ff_size, dropout)]
+                encoders += [EncoderLayer("BERT", n_heads, embed_size, inner_ff_size, dropout)]
             self.encoders = nn.ModuleList(encoders)
             
             #language model

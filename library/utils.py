@@ -84,7 +84,6 @@ def bert_dataloader(sentences_path, vocab_path):
         open(vocab_path, 'w+').write('\n'.join(vocab))
     else:
         vocab = open(vocab_path).read().split('\n')
-    print('creating dataset...')
     dataset = SentencesDataset(sentences, vocab, seq_len)
     kwargs = {'shuffle':True,  'drop_last':True, 'pin_memory':True, 'batch_size':batch_size}
     data_loader = torch.utils.data.DataLoader(dataset, **kwargs)

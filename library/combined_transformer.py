@@ -2,7 +2,7 @@
 from .model import *
 from .train import *
 from .utils import *
-from config import *
+from .config import *
 
 def TransformerCombined(name):
     if name == "BERT":

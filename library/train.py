@@ -25,12 +25,10 @@ def get_bert_batch(loader, loader_iter):
 def bert_training(model, data_loader, dataset, iterations=10, print_each=1):
     # Optimizer
     optim_kwargs = {'lr':1e-4, 'weight_decay':1e-4, 'betas':(.9,.999)}
-    print('initializing optimizer and loss...')
     optimizer = optim.Adam(model.parameters(), **optim_kwargs)
     loss_model = nn.CrossEntropyLoss(ignore_index=dataset.IGNORE_IDX)
 
     # Train
-    print('training...')
     model.train()
     batch_iter = iter(data_loader)
     for it in range(iterations):
@@ -59,7 +57,7 @@ def bert_training(model, data_loader, dataset, iterations=10, print_each=1):
         
         #print step
         if it % print_each == 0:
-            print('ITERATION:', it, 
+            print('ITERATION:', it+1, 
                 ' | Loss', np.round(loss.item(),2),
                 ' | ΔW:', round(model.embeddings.weight.grad.abs().sum().item(),3))
         
