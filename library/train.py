@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 ################################################################################################################################################
 ################################################################################################################################################
 
-def get_batch(loader, loader_iter):
+def get_bert_batch(loader, loader_iter):
     try:
         batch = next(loader_iter)
     except StopIteration:
@@ -22,7 +22,7 @@ def get_batch(loader, loader_iter):
         batch = next(loader_iter)
     return batch, loader_iter
 
-def bert_training(model, data_loader, dataset, iterations=10, print_each=5):
+def bert_training(model, data_loader, dataset, iterations=10, print_each=1):
     # Optimizer
     optim_kwargs = {'lr':1e-4, 'weight_decay':1e-4, 'betas':(.9,.999)}
     print('initializing optimizer and loss...')
@@ -36,7 +36,7 @@ def bert_training(model, data_loader, dataset, iterations=10, print_each=5):
     for it in range(iterations):
         
         #get batch
-        batch, batch_iter = get_batch(data_loader, batch_iter)
+        batch, batch_iter = get_bert_batch(data_loader, batch_iter)
         
         #infer
         masked_input = batch['input']
@@ -73,6 +73,32 @@ def bert_training(model, data_loader, dataset, iterations=10, print_each=5):
 ################################################################################################################################################
 ################################################################################################################################################
 
+def get_gpt_batch(data: list[str], block_size: int, batch_size: int, DEVICE):
+    """
+    This is a simple function to create batches of data.
+    GPUs allow for parallel processing we can feed multiple chunks at once
+    so that's why we would need batches - how many independant sequences
+    will we process in parallel.
+
+    Parameters:
+    data: list[str]: data to take batch from
+    block_size (int): size of the text that is proccessed at once
+    batch_size (int): number of sequences to process in parallel
+
+    Returns:
+    x, y: a tuple with token sequence and token target
+    """
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    # we stack batch_size rows of sentences
+    # so x and y are the matrices with rows_num=batch_size
+    # and col_num=block_size
+    x = torch.stack([data[i : i + block_size] for i in ix])
+    # y is x shifted one position right - because we predict
+    # word in y having all the previous words as context
+    y = torch.stack([data[i + 1 : i + block_size + 1] for i in ix])
+    x, y = x.to(DEVICE), y.to(DEVICE)
+    return x, y
+
 @torch.no_grad()
 def estimate_loss(
     data: list[str],
@@ -85,35 +111,34 @@ def estimate_loss(
     model.eval()
     losses = torch.zeros(eval_iters)
     for k in range(eval_iters):
-        X, Y = get_batch(data=data, block_size=block_size, batch_size=batch_size)
+        X, Y = get_gpt_batch(data=data, block_size=block_size, batch_size=batch_size)
         logits, loss = model.forward(X, Y)
         losses[k] = loss.item()
     out = losses.mean()
     model.train()
     return out
 
-def gpt_training(train_data, val_data, print_each=5):
+def gpt_training(model, train_data, val_data, LEARNING_RATE, BLOCK_SIZE, BATCH_SIZE, DEVICE, MAX_ITER = 10, print_each=1):
 
     # optimizer takes the model's parameters and the learning rate as input,
     # and updates the parameters during the training process in order to
     # minimize the loss function.
-    optimizer = torch.optim.AdamW(m.parameters(), lr=LEARNING_RATE)
-    MAX_ITER = 500
+    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
     for step in range(MAX_ITER):
 
         # every print_each evaluate the loss on train and val sets
         if step % print_each == 0 or step == MAX_ITER - 1:
             loss_train = estimate_loss(
-                data=train_data, model=m, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
+                data=train_data, model=model, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
             )
             loss_val = estimate_loss(
-                data=val_data, model=m, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
+                data=val_data, model=model, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE
             )
             print("Step {:10} | Train Loss {:6.4f} | Validation Loss {:6.4f}".format(step, loss_train, loss_val))
 
         # sample a batch of data
-        xb, yb = get_batch(data=train_data, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE)
-        logits, loss = m.forward(xb, yb)
+        xb, yb = get_gpt_batch(data=train_data, block_size=BLOCK_SIZE, batch_size=BATCH_SIZE, DEVICE=DEVICE)
+        logits, loss = model.forward(xb, yb)
         # zero_grad() method sets the gradients of all parameters in the optimizer to zero
         optimizer.zero_grad(set_to_none=True)
         # backward() method on the loss variable calculates the gradients 

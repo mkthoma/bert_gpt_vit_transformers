@@ -10,6 +10,7 @@ from collections import Counter
 from os.path import exists
 import torch
 import re
+from .config import *
 
 
 ################################################################################################################################################
@@ -69,9 +70,9 @@ class SentencesDataset(Dataset):
 
 # DATALOADER FOR BERT
 def bert_dataloader(sentences_path, vocab_path):
-    batch_size = 1024
-    seq_len = 20
-    n_vocab = 40000
+    batch_size = bert_config()["batch_size"]
+    seq_len = bert_config()["seq_len"]
+    n_vocab = bert_config()["n_vocab"]
     sentences = open(sentences_path).read().lower().split('\n')
     special_chars = ',?;.:/*!+-()[]{}"\'&'
     sentences = [re.sub(f'[{re.escape(special_chars)}]', ' \g<0> ', s).split(' ') for s in sentences]
@@ -96,6 +97,17 @@ def bert_dataloader(sentences_path, vocab_path):
 ################################################################################################################################################
 ################################################################################################################################################
 
+def encode(text_seq: str, tokenizer: any) -> torch.Tensor:
+    """
+    Function to encode input text using a pre-trained tokenizer and vectorized lookups
+    """
+    # tokenize the input text
+    tokens = tokenizer.tokenize(text_seq)
+    # convert the tokens to their corresponding ids
+    token_indices = tokenizer.convert_tokens_to_ids(tokens)
+    token_indices = torch.tensor(token_indices, dtype=torch.long)
+    return token_indices
+
 def gpt_dataset(dataset_path):
 
     path_do_data = dataset_path
@@ -110,7 +122,7 @@ def gpt_dataset(dataset_path):
     n = int(0.9 * len(data))  # first 90% will be train, rest val
     train_data = data[:n]
     val_data = data[n:]
-    return train_data, val_data
+    return train_data, val_data, vocab_size
 
 
 ################################################################################################################################################
