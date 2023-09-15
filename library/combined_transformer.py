@@ -39,15 +39,14 @@ def TransformerCombined(name, iterations=10):
             attn_dropout = config["attn_dropout"]
             mlp_dropout = config["mlp_dropout"]
             embedding_dropout = config["embedding_dropout"] 
-            optimizer = config["optimizer"]
-            loss_fn = config["loss_fn"]
 
             train_dataloader, test_dataloader, class_names, train_data, test_data = vit_dataloader(train_dir, test_dir, transform, batch_size)
             
             model = vit_transformer(img_size, in_channels, patch_size, num_transformer_layers, embedding_dim,mlp_size, num_heads, attn_dropout, mlp_dropout, embedding_dropout, len(train_data.classes))
-            
+        
+            optimizer = torch.optim.Adam(params=model.parameters(), lr=3e-3, betas=(0.9, 0.999), weight_decay=0.3) 
+            loss_fn = torch.nn.CrossEntropyLoss()            
             device = "cuda" if torch.cuda.is_available() else "cpu"
+            
             vit_train(model, train_dataloader, test_dataloader, optimizer, loss_fn, iterations, device)
-
-            return model
 
