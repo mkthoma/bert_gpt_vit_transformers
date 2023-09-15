@@ -132,7 +132,7 @@ def gpt_dataset(dataset_path):
 
 NUM_WORKERS = os.cpu_count()-1
 
-def create_dataloaders(
+def vit_dataloader(
     train_dir: str, 
     test_dir: str, 
     transform: transforms.Compose, 
@@ -185,4 +185,4 @@ def create_dataloaders(
       pin_memory=True,
   )
 
-  return train_dataloader, test_dataloader, class_names
+  return train_dataloader, test_dataloader, class_names, train_data, test_data

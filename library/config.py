@@ -52,11 +52,25 @@ def vit_config():
     image_path = "/content/bert_gpt_vit_transformers/library/data/vit"
     train_dir = image_path + "/train"
     test_dir = image_path + "/test"
+    optimizer = torch.optim.Adam(params=vit.parameters(), lr=3e-3, betas=(0.9, 0.999), weight_decay=0.3) 
+    loss_fn = torch.nn.CrossEntropyLoss()
+
     config = {"device": device,
             "train_dir": train_dir,
             "test_dir": test_dir,
             "IMG_SIZE": 224,
             "BATCH_SIZE": 32,
-            "patch_size": 16}
+            "patch_size": 16,
+            "img_size": 224, # Training resolution from Table 3 in ViT paper
+            "in_channels": 3, # Number of channels in input image
+            "num_transformer_layers": 12, # Layers from Table 1 for ViT-Base
+            "embedding_dim": 768, # Hidden size D from Table 1 for ViT-Base
+            "mlp_size": 3072, # MLP size from Table 1 for ViT-Base
+            "num_heads": 12, # Heads from Table 1 for ViT-Base
+            "attn_dropout": 0, # Dropout for attention projection
+            "mlp_dropout": 0.1, # Dropout for dense/MLP layers 
+            "optimizer": optimizer,
+            "loss_fn": loss_fn,
+            "embedding_dropout": 0.1,} # Dropout for patch and position embeddings
     return config
 

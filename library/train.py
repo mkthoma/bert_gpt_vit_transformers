@@ -278,7 +278,7 @@ def vit_train(model: torch.nn.Module,
           loss_fn: torch.nn.Module,
           epochs: int,
           device: torch.device,
-          clip_norm: bool=False,) -> Dict[str, List]:
+          clip_norm: bool=False,):
     """Trains and tests a PyTorch model.
 
     Passes a target PyTorch models through vit_train_step() and vit_test_step()
@@ -342,12 +342,12 @@ def vit_train(model: torch.nn.Module,
           f"test_acc: {test_acc:.4f}"
         )
 
-        # Update results dictionary
-        results["train_loss"].append(train_loss)
-        results["train_acc"].append(train_acc)
-        results["test_loss"].append(test_loss)
-        results["test_acc"].append(test_acc)
+    #     # Update results dictionary
+    #     results["train_loss"].append(train_loss)
+    #     results["train_acc"].append(train_acc)
+    #     results["test_loss"].append(test_loss)
+    #     results["test_acc"].append(test_acc)
 
-    # Return the filled results at the end of the epochs
-    return results
+    # # Return the filled results at the end of the epochs
+    # return results
 
